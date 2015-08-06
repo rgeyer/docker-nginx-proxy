@@ -1,4 +1,4 @@
-FROM nginx:1.9.0
+FROM nginx:1.9.2
 MAINTAINER Jason Wilder jwilder@litl.com
 
 # Install wget and install/updates certificates
@@ -17,7 +17,7 @@ RUN echo "daemon off;" >> /etc/nginx/nginx.conf \
 RUN curl -o /usr/local/bin/forego https://godist.herokuapp.com/projects/ddollar/forego/releases/current/linux-amd64/forego \
  && chmod u+x /usr/local/bin/forego
 
-ENV DOCKER_GEN_VERSION 0.3.9
+ENV DOCKER_GEN_VERSION 0.4.0
 
 RUN curl -OL https://github.com/jwilder/docker-gen/releases/download/$DOCKER_GEN_VERSION/docker-gen-linux-amd64-$DOCKER_GEN_VERSION.tar.gz \
  && tar -C /usr/local/bin -xvzf docker-gen-linux-amd64-$DOCKER_GEN_VERSION.tar.gz \
