@@ -153,13 +153,30 @@ server {
 	include {{ printf "/etc/nginx/vhost.d/%s" $host }};
 	{{ end }}
 
-	location / {
-		proxy_pass {{ $proto }}://{{ $host }};
-		{{ if (exists (printf "/etc/nginx/htpasswd/%s" $host)) }}
-		auth_basic	"Restricted {{ $host }}";
-		auth_basic_user_file	{{ (printf "/etc/nginx/htpasswd/%s" $host) }};
-		{{ end }}
-	}
+	{{ if whereNotExist $containers ".Env.SUB_PATH" }}
+  	location / {
+  		proxy_pass {{ $proto }}://{{ $host }};
+  		{{ if (exists (printf "/etc/nginx/htpasswd/%s" $host)) }}
+  		auth_basic	"Restricted {{ $host }}";
+  		auth_basic_user_file	{{ (printf "/etc/nginx/htpasswd/%s" $host) }};
+  		{{ end }}
+  	}
+  {{else}}
+    {{ range $container := $containers }}
+      location /{{ $container.Env.SUB_PATH }}/ {
+        proxy_pass {{ $proto }}://{{ $host }}-{{ $container.Env.SUB_PATH }}/;
+        proxy_redirect off;
+        proxy_set_header Host {{ $host }};
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Original-Request $request_uri;
+    		{{ if (exists (printf "/etc/nginx/htpasswd/%s" $host)) }}
+    		auth_basic	"Restricted {{ $host }}";
+    		auth_basic_user_file	{{ (printf "/etc/nginx/htpasswd/%s" $host) }};
+    		{{ end }}
+      }
+    {{end}}
+  {{end}}
 }
 {{ else }}
 
@@ -190,7 +207,7 @@ server {
   {{else}}
     {{ range $container := $containers }}
       location /{{ $container.Env.SUB_PATH }}/ {
-        proxy_pass {{ $proto }}://{{ $host }}-{{ $container.Env.SUB_PATH }}/{{ $container.Env.SUB_PATH }}/;
+        proxy_pass {{ $proto }}://{{ $host }}-{{ $container.Env.SUB_PATH }}/;
         proxy_redirect off;
         proxy_set_header Host {{ $host }};
         proxy_set_header X-Real-IP $remote_addr;
